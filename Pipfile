@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = {extras = ["all"], version = "==0.115.0"}
+pydantic = {extras = ["email"], version = "*"}
+uvicorn = "==0.31.0"
+jinja2 = "==3.1.4"
+pydantic-settings = "==2.5.2"
+aiosqlite = "==0.20.0"
+alembic = "==1.13.3"
+sqlalchemy = "==2.0.35"
+bcrypt = "==4.0.1"
+passlib = {extras = ["bcrypt"], version = "==1.7.4"}
+python-jose = "==3.3.0"
+loguru = "==0.7.2"
+markdown2 = "==2.5.1"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"
