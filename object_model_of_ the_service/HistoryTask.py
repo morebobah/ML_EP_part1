@@ -1,10 +1,10 @@
 from History import History
-from MLModelInferenceClient import MLModel_InferenceClient
+from MLModelInferenceClient import MLModelInferenceClient
 from MLTaskItem import MLTaskItem
 
 class HistoryTask(History):
 
-    def __init__(self, mlmodel: MLModel_InferenceClient) -> None:
+    def __init__(self, mlmodel: MLModelInferenceClient) -> None:
         mlmodel.register(self)
 
     def event(self, o: MLTaskItem) -> None:
