@@ -1,9 +1,11 @@
 from datetime import datetime
+from User import User
 
 class Item:
     def __init__(self, value: type) -> None:
         self.__id = None
         self.value = type
+        self.owner = None
         self.created = datetime.now()
         self.processed = None
         self.result = 'Unknown'
