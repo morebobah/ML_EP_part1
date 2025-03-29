@@ -9,7 +9,6 @@ __pycache__/
 # Distribution / packaging
 .Python
 rabbitmq/
-dbdata/
 env/
 build/
 develop-eggs/

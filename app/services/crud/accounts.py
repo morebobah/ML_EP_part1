@@ -1,8 +1,7 @@
-from Observer import Observable
-from User import User
-from PayItem import PayItem
+from observer import Observable
+from user import User
 
-class Accounts(Observable):
+class accounts(Observable):
     def get_balance(self, u: User) -> float:
         current_user_balance = 0.0
         

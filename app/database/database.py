@@ -1,0 +1,33 @@
+from database.config import get_settings
+
+from datetime import datetime
+from typing import Annotated
+
+from sqlalchemy import func, create_engine, text
+from sqlalchemy.orm import DeclarativeBase, mapped_column
+
+
+engine = create_engine(url=get_settings().DATABASE_URL_psycopg, 
+                       echo = True, pool_size=5, max_overflow=10)
+
+class Base(DeclarativeBase):
+    __abstract__ = True
+
+int_pk = Annotated[int, mapped_column(primary_key=True)]
+float_value = Annotated[float, mapped_column(server_default=text('0.0'), nullable=False)]
+created_at = Annotated[datetime, mapped_column(server_default=func.now())]
+updated_at = Annotated[datetime, mapped_column(server_default=func.now(), onupdate=datetime.now)]
+str_uniq = Annotated[str, mapped_column(unique=True, nullable=False)]
+str_null_true = Annotated[str, mapped_column(nullable=True)]
+
+def init_db():
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+    print('Init db has been success')
+
+    
+
+   
+
+
+    
