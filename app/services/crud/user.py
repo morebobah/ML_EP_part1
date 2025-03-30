@@ -1,12 +1,14 @@
 from services.crud.auth import auth
 from models.user import User
 from models.historyofpayments import Historyofpayments
+from models.historyoftasks import Historyoftasks
 from typing import Optional 
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import Engine, Select
-from services.crud.observer import Observable
+from services.crud.observer import Observable, Observer
 
-class usercrud(auth, Observable):
+class usercrud(auth, Observable, Observer):
+    observers = []
 
     def __init__(self, engine: Engine) -> None:
         super().__init__()
@@ -95,14 +97,19 @@ class usercrud(auth, Observable):
         
         return self.make_payment(u, pay)
         
-        
     
     def spend_payment(self, u: User, pay: float) -> float:
         
         if pay>=0.0:
             raise ValueError
+        return self.make_payment(u, u.loyalty * pay)
+    
+    def event(self, hot_item: Historyoftasks) -> None:
+        user_id = hot_item.user.id
+        user_item = self.get_user_by_id(user_id)
+        pay = -1 * hot_item.cost * user_item.loyalty
+        self.spend_payment(user_item, pay)
         
-        return self.make_payment(u, pay)
 
 
 class EmailAlreadyExists(Exception):

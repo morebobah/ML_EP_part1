@@ -2,7 +2,7 @@ from sqlalchemy import text
 from sqlalchemy import event
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.orm import Mapped, mapped_column
-from database.database import Base, int_pk, str_uniq
+from database.database import Base, int_pk, str_uniq, float_zero, float_one, bool_val
 
 class User(Base):
     __tablename__='users'
@@ -12,8 +12,9 @@ class User(Base):
     first_name: Mapped[str]
     last_name: Mapped[str]
     password: Mapped[str]
-    balance: Mapped[float] = mapped_column(default=0.0, server_default=text('0.0'), nullable=False)
-    is_admin: Mapped[bool] = mapped_column(default=False, server_default=text('false'), nullable=False)
+    balance: Mapped[float_zero]
+    loyalty: Mapped[float_one]
+    is_admin: Mapped[bool_val]
 
     extend_existing = True
 

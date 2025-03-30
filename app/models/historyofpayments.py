@@ -2,7 +2,7 @@ from datetime import datetime
 from sqlalchemy.sql import func
 from models.user import User
 from sqlalchemy import text, ForeignKey, DateTime
-from database.database import Base, int_pk, created_at, updated_at, float_value
+from database.database import Base, int_pk, created_at, updated_at, float_zero
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
@@ -16,9 +16,9 @@ class Historyofpayments(Base):
                                                     ondelete='CASCADE', 
                                                     onupdate='CASCADE'))
     user = relationship(User)
-    value: Mapped[float_value]
-    value_before: Mapped[float_value]
-    value_after: Mapped[float_value]
+    value: Mapped[float_zero]
+    value_before: Mapped[float_zero]
+    value_after: Mapped[float_zero]
     created: Mapped[created_at]
     processed: Mapped[updated_at]
     status: Mapped[str]
