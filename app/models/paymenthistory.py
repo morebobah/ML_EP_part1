@@ -8,8 +8,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 
-class Historyofpayments(Base):
-    __tablename__ = 'historyofpayments'
+class PaymentHistory(Base):
+    __tablename__ = 'paymenthistory'
 
     id: Mapped[int_pk]
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", 

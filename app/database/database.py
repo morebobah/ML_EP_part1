@@ -5,10 +5,13 @@ from typing import Annotated
 
 from sqlalchemy import func, create_engine, text
 from sqlalchemy.orm import DeclarativeBase, mapped_column
+from sqlalchemy.orm import sessionmaker
+
 
 
 engine = create_engine(url=get_settings().DATABASE_URL_psycopg, 
                        echo = True, pool_size=5, max_overflow=10)
+session_maker = sessionmaker(engine)
 
 class Base(DeclarativeBase):
     __abstract__ = True
@@ -26,6 +29,7 @@ def init_db():
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     print('Init db has been success')
+    
 
     
 

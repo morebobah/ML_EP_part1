@@ -35,12 +35,8 @@ def create_update_rule(target, conn, **kw):
                       balance=0.0))
     Session = sessionmaker(conn)
     session = Session()
-    is_admin = True
     for user_item in users:
         exists = session.query(User).filter(User.email == user_item.email).first()
         if not exists:
-            if is_admin:
-                user_item.is_admin = is_admin
-                is_admin = False
             session.add(user_item)
     session.commit()

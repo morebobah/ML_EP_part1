@@ -1,72 +1,81 @@
 from database.database import init_db
 from models.user import User
-from models.historyofpayments import Historyofpayments
-from models.historyoftasks import Historyoftasks
-from database.database import engine
-from services.crud.user import usercrud, IssufisientFunds
-from services.crud.mlmodel import mlmodelcrud
-from services.crud.historyofpaymentscrud import historyofpaymentscrud
-from services.crud.historyofmlmodelscrud import historyofmlmodelscrud
+from models.paymenthistory import PaymentHistory
+from models.taskshistory import TasksHistory
+
+from schemas.user import SUser
+from schemas.paymenthistory import SPaymentHistory
+from schemas.taskshistory import STasksHistory
+from services.crud.usercrud import UsersCRUD
+from services.crud.paymenthistorycrud import PaymentHistoryCRUD
+from services.crud.taskshistorycrud import TasksHistoryCRUD
+from services.crud.exceptions import InsufficientFunds
+
+from random import randint
 
 if __name__=='__main__':
     init_db()
-    
-    user_functions = usercrud(engine)
-    hop_functions = historyofpaymentscrud(engine)
-    ml_functions = mlmodelcrud(engine)
-    hot_functions = historyofmlmodelscrud(engine)
 
-    user_functions.register(hop_functions)
-    ml_functions.register(hot_functions)
-    ml_functions.register(user_functions)
+    u1 = SUser(email=f'user_main@mydb.one', 
+                      first_name=f'User_main', 
+                      last_name=f'Fortest_main', 
+                      password=f'pw_main', 
+                      balance=300.0, 
+                      is_admin=True,
+                      loyalty=1.0)
+    UsersCRUD.add(u1)
 
-    ml_functions.cost_per_result = 50.0
-
-    users = user_functions.get_all_users()
-
-    
-    print(f'Balance of user {users[1]} is {user_functions.get_balance(users[1])} credits.')
-    user_functions.add_payment(users[1], 100)
-    print(f'Balance of user {users[1]} is {user_functions.get_balance(users[1])} credits.')
-    user_functions.add_payment(users[1], 100)
-    user_functions.add_payment(users[1], 100)
-    user_functions.add_payment(users[1], 100)
-    
-    for user_item in users:
-        user_functions.add_payment(user_item, 50)
-
-    try:
-        user_functions.spend_payment(users[3], -60)
-    except IssufisientFunds:
-        print(f'Issufisient funds')
-
-    print(f'Balance of user {users[1]} is {user_functions.get_balance(users[1])} credits.')
-    user_functions.spend_payment(users[1], -30)
-    print(f'Balance of user {users[1]} is {user_functions.get_balance(users[1])} credits.')
-    
-    print(f'Table of payments for user {users[1]}')
-    for item in hop_functions.get_events({'user_id': users[1].id}):
-        print(f'{item}')
-
-    print(f'Balance of user {users[1]} is {user_functions.get_balance(users[1])} credits.')
-
-    mltasks = []
-    mltasks.append(Historyoftasks(user=users[1],
-                                 image='./static/acff34-4151fa-img.png'))
-    mltasks.append(Historyoftasks(user=users[2],
-                                 image='./static/acff34-4151fa-img.png'))
-    for ml_item in mltasks:
-        ml_functions.do_result(ml_item)
-
-    
-    print(f'Balance of user {users[1]} is {user_functions.get_balance(users[1])} credits.')
-    print(f'Balance of user {users[2]} is {user_functions.get_balance(users[1])} credits.')
-    
-    print(f'Table of payments for user {users[1]}')
-    for item in hop_functions.get_events({'user_id': users[1].id}):
-        print(f'{item}')
+    users = UsersCRUD.find_all_users()
+    UsersCRUD.allow_admin_by_id(users[0].id)
+    UsersCRUD.disallow_admin_by_email(users[0].email)
     
 
-    print(f'Table of tasks for user {users[1]}')
-    for item in hot_functions.get_events({'user_id': users[1].id}):
-        print(f'{item}')
+    payments = [1.0 * randint(1, 100) for idx in range(len(users))]
+    spends = [-1.0 * randint(1, 100) for idx in range(len(users))]
+
+    for idx, user_item in enumerate(users):
+        balance = UsersCRUD.get_balance_by_id(user_item.id)
+        ph = SPaymentHistory(user_id=user_item.id, 
+                            value=payments[idx],
+                            value_before=balance,
+                            value_after=balance+payments[idx],
+                            status='pending')
+        pay_item = PaymentHistoryCRUD.add(ph)
+        UsersCRUD.add_payment_by_id(user_item.id, payments[idx])
+        PaymentHistoryCRUD.update_status_by_id(pay_item.id, 'complete')
+
+    for idx, user_item in enumerate(users):
+        balance = UsersCRUD.get_balance_by_id(user_item.id)
+        ph = SPaymentHistory(user_id=user_item.id, 
+                            value=spends[idx],
+                            value_before=balance,
+                            value_after=balance+spends[idx],
+                            status='pending')
+        try:
+            pay_item = PaymentHistoryCRUD.add(ph)
+            UsersCRUD.spend_payment_by_id(user_item.id, spends[idx])
+            PaymentHistoryCRUD.update_status_by_id(pay_item.id, 'complete')
+
+        except InsufficientFunds:
+            PaymentHistoryCRUD.update_status_by_id(pay_item.id, 'rejected')
+            print(f'У пользователя {user_item} недостаточно средств для {spends[idx]} на балансе {user_item.balance}')
+
+    for pay_item in PaymentHistoryCRUD.find_all_by_user(users[0]):
+        print(f'id={pay_item.id}, ' 
+              f'from={pay_item.value_before}, '
+              f'to={pay_item.value_after}, '
+              f'with={pay_item.value} '
+              f'status={pay_item.status}, '
+              f'date={pay_item.processed}')
+        
+    for idx, user_item in enumerate(users):
+        th = STasksHistory(user_id=user_item.id, 
+                            image='./ocr_in_image.png',
+                            status='complete',
+                            result='',
+                            cost=30.0)
+        TasksHistoryCRUD.add(th)
+
+        
+
+    
