@@ -5,13 +5,18 @@ from typing import Annotated
 
 from sqlalchemy import func, create_engine, text
 from sqlalchemy.orm import DeclarativeBase, mapped_column
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 
 
 engine = create_engine(url=get_settings().DATABASE_URL_psycopg, 
                        echo = True, pool_size=5, max_overflow=10)
 session_maker = sessionmaker(engine)
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+
 
 class Base(DeclarativeBase):
     __abstract__ = True

@@ -24,19 +24,3 @@ class User(Base):
     def __str__(self) -> str:
         return f"{self.id} - {self.first_name} {self.last_name}"
   
-@event.listens_for(Base.metadata, 'after_create')
-def create_update_rule(target, conn, **kw):
-    users = []
-    for idx in range(5):
-        users.append(User(email=f'user{idx}@mydb.one', 
-                      first_name=f'User{idx}', 
-                      last_name=f'Fortest{idx}', 
-                      password=f'pw{idx}', 
-                      balance=0.0))
-    Session = sessionmaker(conn)
-    session = Session()
-    for user_item in users:
-        exists = session.query(User).filter(User.email == user_item.email).first()
-        if not exists:
-            session.add(user_item)
-    session.commit()

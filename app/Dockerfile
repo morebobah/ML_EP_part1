@@ -3,6 +3,6 @@ WORKDIR /app
 COPY ./requirements.txt /app/
 RUN pip install --upgrade pip && pip install -r /app/requirements.txt
 EXPOSE 8000
-#CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-CMD ["python", "main.py"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+#CMD ["python", "main.py"]
 
