@@ -27,17 +27,15 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - type: volume
-        source: postgres_volume
-        target: /var/lib/postgresql/data
-  rabbitmq:
-    image: rabbitmq:3.8-management
-    restart: on-failure
-    ports:
-      - 15672:15672
-      - 5672:5672
-    volumes:
-      - ./rabbitmq:/var/lib/rabbitmq
+      - postgres_volume:/var/lib/postgresql/data
+#  rabbitmq:
+#    image: rabbitmq:3.8-management
+#    restart: on-failure
+#    ports:
+#      - 15672:15672
+#      - 5672:5672
+#    volumes:
+#      - ./rabbitmq:/var/lib/rabbitmq
 volumes:
     postgres_volume:
 
