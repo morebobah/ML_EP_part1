@@ -1,11 +1,16 @@
-from fastapi import FastAPI, Request
-from fastapi.templating import Jinja2Templates
-from schemas.user import SUserAuth, SUserRegister, SUser, SUserID
+from fastapi import FastAPI
+from routes.home import router as home_router
+from routes.auth import router as auth_router
+from routes.user import router as user_router
+from routes.ml import router as ml_router
+from routes.admin import router as admin_router
 from database.database import init_db
 from services.crud.usercrud import UsersCRUD
 from schemas.user import SUser
 from models.paymenthistory import PaymentHistory
 from models.taskshistory import TasksHistory
+import uvicorn
+
 
 
 def lifespan(app: FastAPI):
@@ -40,9 +45,14 @@ def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-templates = Jinja2Templates(directory='templates')
+
+app.include_router(home_router)
+app.include_router(auth_router)
+app.include_router(user_router)
+app.include_router(ml_router)
+app.include_router(admin_router)
 
 
-@app.get("/", summary='Страница приглашения в сервис!')
-def home_page(request: Request):
-    return templates.TemplateResponse(name='index.html', context={'request': request})
+
+if __name__=='__main__':
+    uvicorn.run('api:app', host='0.0.0.0', port=8000, reload=True)
