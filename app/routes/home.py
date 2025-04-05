@@ -14,10 +14,10 @@ def home_page(request: Request):
     return templates.TemplateResponse(name='index.html', context={'request': request})
 
 
-@router.get("/home/", summary='Личный кабинет!')
+@router.get("/home", summary='Личный кабинет!')
 def personal_account(request: Request):
     return templates.TemplateResponse(name='home.html', context={'request': request})
 
-@router.get("/models/", summary='Доступные модели')
+@router.get("/models", summary='Доступные модели')
 def ml_worker(request: Request):
     return templates.TemplateResponse(name='ml.html', context={'request': request})

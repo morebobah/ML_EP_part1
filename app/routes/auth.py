@@ -23,7 +23,7 @@ def register_user(user_data: SUserRegister) -> dict:
     return {'message': 'success', 'detail': 'Вы успешно зарегистрированы!'}
 
 
-@router.post("/login/", summary='Авторизация пользователя')
+@router.post("/login", summary='Авторизация пользователя')
 def auth_user(user_data: SUserAuth):
     check = authenticate_user(email=user_data.email, password=user_data.password)
     if check is None:

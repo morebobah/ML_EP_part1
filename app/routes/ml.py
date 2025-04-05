@@ -8,7 +8,7 @@ from schemas.taskshistory import STasksHistory
 
 router = APIRouter(prefix='/ml', tags=['Загрузка данных для модели машинного обучения'])
 
-@router.post("/upload_task/", summary='Получить историю запросов')
+@router.post("/task", summary='Создать запрос на обработку изображения')
 def upload_task(response: Response, user_data: SUserID, image: UploadFile):
     
     user = UsersCRUD.find_one_or_none_by_id(id = user_data.id)

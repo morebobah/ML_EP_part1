@@ -11,7 +11,7 @@ from services.crud.taskshistorycrud import TasksHistoryCRUD
 router = APIRouter(prefix='/users', tags=['Функции пользователя'])
 
 
-@router.get('/get_user', summary='Информация о пользователе')
+@router.get('/user', summary='Информация о пользователе')
 def get_user() -> dict:
     
     user_id = 1 #get user from jwt token now only 1
@@ -29,7 +29,7 @@ def get_user() -> dict:
     return result
 
 
-@router.get('/get_balance', summary='Текущий баланс пользователя')
+@router.get('/balance', summary='Текущий баланс пользователя')
 def get_balance() -> dict:
     user_id = 1 #get user from jwt token now only 1
 
@@ -41,7 +41,7 @@ def get_balance() -> dict:
     return {'message':'success', 'detail': 'Успешно', 'name': 'balance', 'value': user.balance}
 
 
-@router.get('/get_loyalty', summary='Размер скидки пользователя по идентификатору')
+@router.get('/loyalty', summary='Размер скидки пользователя по идентификатору')
 def get_loyalty() -> dict:
     user_id = 1 #get user from jwt token now only 1
     
@@ -54,7 +54,7 @@ def get_loyalty() -> dict:
 
 
 
-@router.get('/balanceshistory', summary='История платежей')
+@router.get('/balances/history', summary='История платежей')
 def get_balances_history() -> list:
     user_id = 1 #get user from jwt token now only 1
     
@@ -75,7 +75,7 @@ def get_balances_history() -> list:
     return result
 
 
-@router.get('/taskshistory', summary='История запроов модели')
+@router.get('/tasks/history', summary='История запроов модели')
 def get_tasks_history() -> list:
 
     user_id = 1 #get user from jwt token now only 1
