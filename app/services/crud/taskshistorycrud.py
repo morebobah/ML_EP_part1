@@ -53,3 +53,35 @@ class TasksHistoryCRUD:
                 return record
             except SQLAlchemyError as e:
                 raise
+    
+    
+    @classmethod
+    def update_status_by_id(cls, filter: BaseModel, new_status: BaseModel):
+        filter_dict = filter.model_dump(exclude_unset=True)
+        with session_maker() as session:
+            try:
+                query = select(cls.model).filter_by(**filter_dict)
+                result = session.execute(query)
+                record = result.scalar_one_or_none()
+                record.status = new_status
+                session.commit()
+                session.refresh(record)
+                return record
+            except SQLAlchemyError as e:
+                raise
+    
+    
+    @classmethod
+    def update_result_by_id(cls, filter: BaseModel, new_result: BaseModel):
+        filter_dict = filter.model_dump(exclude_unset=True)
+        with session_maker() as session:
+            try:
+                query = select(cls.model).filter_by(**filter_dict)
+                result = session.execute(query)
+                record = result.scalar_one_or_none()
+                record.result = new_result
+                session.commit()
+                session.refresh(record)
+                return record
+            except SQLAlchemyError as e:
+                raise

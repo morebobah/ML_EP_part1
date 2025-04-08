@@ -28,10 +28,11 @@ class UsersCRUD:
                 raise
 
     @classmethod
-    def find_one_or_none_by_email(cls, email: BaseModel):
+    def find_one_or_none_by_email(cls, filters: BaseModel):
+        filter_dict = filters.model_dump(exclude_unset=True)
         with session_maker() as session:
             try:
-                query = select(cls.model).filter_by(email=email)
+                query = select(cls.model).filter_by(**filter_dict)
                 result = session.execute(query)
                 record = result.scalar_one_or_none()
                 return record
@@ -39,10 +40,11 @@ class UsersCRUD:
                 raise
 
     @classmethod
-    def find_one_or_none_by_id(cls, id: BaseModel):
+    def find_one_or_none_by_id(cls, filters: BaseModel):
+        filter_dict = filters.model_dump(exclude_unset=True)
         with session_maker() as session:
             try:
-                query = select(cls.model).filter_by(id=id)
+                query = select(cls.model).filter_by(**filter_dict)
                 result = session.execute(query)
                 record = result.scalar_one_or_none()
                 return record
@@ -51,16 +53,7 @@ class UsersCRUD:
 
     @classmethod
     def get_balance_by_id(cls, id: BaseModel):
-        with session_maker() as session:
-            try:
-                query = select(cls.model).filter_by(id=id)
-                result = session.execute(query)
-                record = result.scalar_one_or_none()
-                if record is not None:
-                    return record.balance
-                return record
-            except SQLAlchemyError as e:
-                raise
+        return cls.find_one_or_none_by_id(id).balance
     
     @classmethod
     def add(cls, values: BaseModel):
@@ -136,10 +129,11 @@ class UsersCRUD:
                 raise
 
     @classmethod
-    def add_payment_by_id(cls, id: BaseModel, pay: BaseModel):
+    def add_payment_by_id(cls, filters: BaseModel, pay: BaseModel):
+        filter_dict = filters.model_dump(exclude_unset=True)
         with session_maker() as session:
             try:
-                query = select(cls.model).filter_by(id = id)
+                query = select(cls.model).filter_by(**filter_dict)
                 result = session.execute(query)
                 record = result.scalar_one_or_none()
                 record.balance += pay

@@ -102,19 +102,21 @@ def get_tasks_history() -> list:
 def set_new_balance(new_balance: SBalance) -> dict:
 
     user_id = 1 #get user from jwt token now only 1
+
+    user_data = SUserID(id = user_id)
     
-    user = UsersCRUD.find_one_or_none_by_id(id = user_id)
+    user = UsersCRUD.find_one_or_none_by_id(user_data)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail='Пользователь не найден')
-    balance = UsersCRUD.get_balance_by_id(user_id)
+    balance = UsersCRUD.get_balance_by_id(user_data)
     ph = SPaymentHistory(user_id=user_id, 
                             value=new_balance.balance,
                             value_before=balance,
                             value_after=balance+new_balance.balance,
                             status='pending')
     pay_item = PaymentHistoryCRUD.add(ph)
-    UsersCRUD.add_payment_by_id(user_id, new_balance.balance)
+    UsersCRUD.add_payment_by_id(user_data, new_balance.balance)
     PaymentHistoryCRUD.update_status_by_id(pay_item.id, 'complete')
     
     return {'message': 'success', 'detail': 'Баланс успешно пополнен'}

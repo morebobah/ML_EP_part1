@@ -4,9 +4,10 @@ from routes.auth import router as auth_router
 from routes.user import router as user_router
 from routes.ml import router as ml_router
 from routes.admin import router as admin_router
+from routes.health import router as health_router
 from database.database import init_db
 from services.crud.usercrud import UsersCRUD
-from schemas.user import SUser
+from schemas.user import SUser, SUserEmail
 from models.paymenthistory import PaymentHistory
 from models.taskshistory import TasksHistory
 import uvicorn
@@ -14,7 +15,7 @@ import uvicorn
 
 
 def lifespan(app: FastAPI):
-    init_db()
+    #init_db()
     
     user = SUser(first_name='User', 
                  last_name='Test', 
@@ -24,7 +25,7 @@ def lifespan(app: FastAPI):
                  balance=0.0,
                  loyalty=1.0)
     
-    if UsersCRUD.find_one_or_none(user) is None:
+    if UsersCRUD.find_one_or_none_by_email(SUserEmail(email=user.email)) is None:
         UsersCRUD.add(user)
 
 
@@ -36,7 +37,7 @@ def lifespan(app: FastAPI):
                  balance=0.0,
                  loyalty=1.0)
     
-    if UsersCRUD.find_one_or_none(admin) is None:
+    if UsersCRUD.find_one_or_none_by_email(SUserEmail(email=admin.email)) is None:
         UsersCRUD.add(admin)
     
     yield
@@ -51,6 +52,7 @@ app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(ml_router)
 app.include_router(admin_router)
+app.include_router(health_router)
 
 
 

@@ -7,3 +7,15 @@ class STasksHistory(BaseModel):
     status: str = Field(...)
     result: str = Field(...)
     cost: float = Field(...)
+
+
+class STaskComplete(BaseModel):
+    task_id: int = Field(...)
+    user_id: int = Field(...)
+    result: str = Field(...)
+    cost: float = Field(...)
+    key: str = Field(...)
+
+
+class STaskID(BaseModel):
+    id: int = Field(...)
