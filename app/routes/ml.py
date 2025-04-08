@@ -22,7 +22,21 @@ def user_checker(user_id: int = Form(...)):
 @router.post("/task", summary='Создать запрос на обработку изображения')
 def upload_task(image: Annotated[bytes, File()],
                 user_id: dict = Depends(user_checker)):
+    model_cost = 30.0
+
     user_data = SUserID(id=user_id)
+    
+    user = UsersCRUD.find_one_or_none_by_id(user_data)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail='Пользователь не найден')
+    
+    balance = UsersCRUD.get_balance_by_id(user_data)
+    if balance < model_cost:
+        raise HTTPException(status_code=status.HTTP_423_LOCKED,
+                            detail='Недостаточно средств')
+
+
     file_name = f'./files/{str(uuid.uuid4())}.png'
     try:
         with open(file_name, 'wb') as f:
@@ -32,17 +46,13 @@ def upload_task(image: Annotated[bytes, File()],
             status_code=status.HTTP_507_INSUFFICIENT_STORAGE,
             detail='Ошибка обработки файла'
         )
-    
-    user = UsersCRUD.find_one_or_none_by_id(user_data)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail='Пользователь не найден')
-    
+   
     
     th_item = {'user_id': user_data.id,
                'image': file_name,
                'status': 'pending',
-               'result': ''}
+               'result': '', 
+               'cost': model_cost}
     th = STasksHistory(**th_item)
     th_item['bytes'] = base64.b64encode(image).decode('ascii')
     task = TasksHistoryCRUD.add(th)
@@ -52,9 +62,13 @@ def upload_task(image: Annotated[bytes, File()],
         sender.send_task(json.dumps(th_item))
 
     
-    return {'message': 'success', 'detail': 'Изображение отправлено на обработку'}
+    return {'message': 'success', 
+            'detail': 'Изображение отправлено на обработку',
+            'name': 'task_id', 
+            'value': f'{task.id}', 
+            'raw_data': f'task_id={task.id}'}
 
-@router.patch("/task/complete", summary='Завершить ml задачу')
+@router.patch("/task/complete", summary='Завершить ml задачу', include_in_schema=False)
 def complete(task: STaskComplete):
     user_id = STaskID(id = task.user_id)
 

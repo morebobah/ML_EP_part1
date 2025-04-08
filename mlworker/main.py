@@ -25,9 +25,10 @@ connection_params = pika.ConnectionParameters(host='rabbitmq',
 
 connection = pika.BlockingConnection(connection_params)
 
-chanel = connection.channel()
+channel = connection.channel()
 
 queue_name = 'ml_task_queue'
+channel.queue_declare(queue=queue_name)
 
 #def predict_text(image_data):
 #    image = Image.frombytes('RGBA', (128,128), image_data)
@@ -69,9 +70,9 @@ def callback(ch, method, properties, body, *args, **kwargs):
     
     
 
-chanel.basic_consume(queue_name, 
+channel.basic_consume(queue_name, 
                      on_message_callback=callback,
                      auto_ack=False)
 
 logger.info('Waiting for messages. To exit, press Ctrl+C') 
-chanel.start_consuming()
+channel.start_consuming()
