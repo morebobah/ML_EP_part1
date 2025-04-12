@@ -40,7 +40,7 @@ def all_balances_history() -> list:
 
 
 @router.get('/tasks/history', summary='Получить историю запросов модели у всех пользователей')
-def all_tasks_history(user_data: SUserID) -> list:
+def all_tasks_history() -> list:
 
     result = list()
     for hot_item in TasksHistoryCRUD.find_all_tasks():
@@ -133,7 +133,7 @@ def get_tasks_history(user_id: Annotated[int, Path(title='Идентификат
     return result
 
 
-@router.post('/create/user', summary='Создать нового пользователя')
+@router.post('/user', summary='Создать нового пользователя')
 def create_users(user_data: SUserRegister) -> dict:
     user = UsersCRUD.find_one_or_none_by_email(email = user_data.email)
     if user:
@@ -148,13 +148,13 @@ def create_users(user_data: SUserRegister) -> dict:
 
 @router.put('/balance/user/id', summary='Изменить баланс пользователя по id')
 def change_balance_by_id(id: SAdminID, new_balance: SBalance) -> dict:
-    user = UsersCRUD.find_one_or_none_by_id(id = id)
+    user = UsersCRUD.find_one_or_none_by_id(id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail='Пользователь не найден')
     
     balance = UsersCRUD.get_balance_by_id(id)
-    ph = SPaymentHistory(user_id=id,
+    ph = SPaymentHistory(user_id=id.id,
                          value=new_balance.balance,
                          value_before=balance,
                          value_after=balance+new_balance.balance,

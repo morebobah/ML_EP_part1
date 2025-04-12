@@ -18,6 +18,8 @@ python-jose = "==3.3.0"
 loguru = "==0.7.2"
 markdown2 = "==2.5.1"
 asyncpg = "*"
+pika = "*"
+torch = "*"
 
 [dev-packages]
 

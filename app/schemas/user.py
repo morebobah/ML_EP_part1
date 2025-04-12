@@ -22,3 +22,6 @@ class SUser(BaseModel):
 
 class SUserID(BaseModel):
     id: int = Field(...)
+
+class SUserEmail(BaseModel):
+    email: EmailStr
