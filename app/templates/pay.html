@@ -1,0 +1,151 @@
+{% include "base.html" %}
+{% include "panel.html" %}
+<main class="container mx-auto py-8 px-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Блок пополнения баланса -->
+        <div class="custom-border bg-white p-6 custom-shadow">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Пополнение баланса</h2>
+            <form id="payment-form" class="space-y-4" name="payment">
+                <div>
+                    <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Сумма (руб.)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-ruble-sign text-gray-400"></i>
+                        </div>
+                        <input type="number" id="amount" min="10" step="10" value="100" name="balance"
+                                class="input-focus pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 transition-colors">
+                    </div>
+                </div>
+                <!--
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Способ оплаты</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="payment-method border border-gray-200 rounded-lg p-3 cursor-pointer flex flex-col items-center"
+                                data-method="card">
+                            <i class="fas fa-credit-card text-blue-500 text-2xl mb-1"></i>
+                            <span class="text-xs font-medium">Карта</span>
+                        </div>
+                        <div class="payment-method border border-gray-200 rounded-lg p-3 cursor-pointer flex flex-col items-center"
+                                data-method="qiwi">
+                            <i class="fas fa-wallet text-purple-500 text-2xl mb-1"></i>
+                            <span class="text-xs font-medium">QIWI</span>
+                        </div>
+                        <div class="payment-method border border-gray-200 rounded-lg p-3 cursor-pointer flex flex-col items-center"
+                                data-method="yoomoney">
+                            <i class="fas fa-money-bill-wave text-yellow-500 text-2xl mb-1"></i>
+                            <span class="text-xs font-medium">ЮMoney</span>
+                        </div>
+                        <div class="payment-method border border-gray-200 rounded-lg p-3 cursor-pointer flex flex-col items-center"
+                                data-method="crypto">
+                            <i class="fas fa-coins text-gray-500 text-2xl mb-1"></i>
+                            <span class="text-xs font-medium">Крипта</span>
+                        </div>
+                    </div>
+                    <input type="hidden" id="payment-method" name="payment-method" value="card">
+                </div>
+                -->
+                
+                <div class="pt-2">
+                    <button type="submit" id="submit-btn"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center">
+                        <i class="fas fa-plus-circle mr-2"></i> Пополнить баланс
+                    </button>
+                </div>
+            </form>
+        </div>
+
+
+    <!-- Блок таблицы -->
+    <div class="md:col-span-2 custom-border bg-white p-6 custom-shadow">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">История платежей</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата оплаты</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Сумма</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for line in table %}
+                    <tr class="table-row">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{line['id']}}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{line['date']}}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{line['payment']}}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {%if line['status']=='complete'%}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{{line['status']}}</span>
+                            {% else %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">{{line['status']}}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4 flex justify-between items-center">
+            <div class="text-sm text-gray-500">
+                Показано <span class="font-medium">1</span> - <span class="font-medium">3</span> из <span class="font-medium">3</span> записей
+            </div>
+            <div class="flex space-x-2">
+                <button class="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="px-3 py-1 border border-blue-500 rounded text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                    1
+                </button>
+                <button class="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+<script>
+    const submitBTN = document.getElementById('submit-btn');
+    function updatePage()
+    {
+        window.location.href = '/balance'
+    }
+
+    submitBTN.addEventListener('click', function(event)
+    {
+        const formData = new FormData(document.forms.payment);  
+        fetch("/users/deposit",
+        {
+            headers:
+            {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            method: "POST", 
+            body: formDataToJson(formData)
+        })
+        .then(response => 
+        {
+            if(response.status>199 && response.status<300) return response.json();
+            throw new Error(response.status);
+        })
+        .then(json => 
+        {
+            if(Object.keys(json).includes('message'))
+                if(json['message']=='success')
+                    if(Object.keys(json).includes('detail'))
+                    {
+                        showNotification('success', json['detail']);
+                        updatePage();
+                    }
+
+        })
+        .catch( error =>
+        {
+            console.log(error);
+            showNotification('error', error);
+        })
+        event.preventDefault();
+    });
+</script>
+{% include "foot.html" %}

@@ -1,38 +1,58 @@
 from fastapi import APIRouter, Response, HTTPException, status
-from schemas.user import SUserAuth, SUserRegister, SUser, SUserID
-from services.crud.auth import authenticate_user, get_password_hash
+from database.config import get_settings
+from schemas.user import SUserAuth, SUserRegister, SUser, SUserID, SUserEmail
+from services.auth.auth import AuthService
 from services.crud.usercrud import UsersCRUD
 from services.crud.paymenthistorycrud import PaymentHistoryCRUD
 
 
 router = APIRouter(prefix='/auth', tags=['Авторизация пользователя'])
+settings = get_settings()
 
 
 
 @router.post('/register', summary='Регистрация нового пользователя')
-def register_user(user_data: SUserRegister) -> dict:
-    
-    user = UsersCRUD.find_one_or_none_by_email(email = user_data.email)
+def register_user(response: Response, user_data: SUserRegister) -> dict:
+    user_data.email = str.lower(user_data.email)
+    user_email = SUserEmail(email = user_data.email)
+    user = UsersCRUD.find_one_or_none_by_email(user_email)
     if user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail='Пользователь уже существует'
         )
-    user_data.password = get_password_hash(user_data.password)
+    password = user_data.password
+    user_data.password = AuthService.get_password_hash(password=password)
     UsersCRUD.add(user_data)
+
+    user_data = SUserAuth(email=user_data.email, password=password)
+    check = AuthService.authenticate_user(user_data)
+    if check is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail='Неверное имя пользователя или пароль')
+    
+    access_token = AuthService.create_access_token({"sub": str(check.id)})
+    response.set_cookie(key=settings.COOKIE_NAME, value=access_token, httponly=True)
+
     return {'message': 'success', 'detail': 'Вы успешно зарегистрированы!'}
 
 
 @router.post("/login", summary='Авторизация пользователя')
-def auth_user(user_data: SUserAuth):
-    check = authenticate_user(email=user_data.email, password=user_data.password)
+def login_user(response: Response, user_data: SUserAuth):
+    check = AuthService.authenticate_user(user_data)
     if check is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail='Неверное имя пользователя или пароль')
-    return {'mes': 'success', 'detail': 'Успешная авторизация'}
+    
+    access_token = AuthService.create_access_token({"sub": str(check.id)})
+    response.set_cookie(key=settings.COOKIE_NAME, value=access_token, httponly=True)
+
+    return {'message': 'success', 'detail': 'Успешная авторизация'}
+
+
 
 @router.get("/logout", summary='Выход из личного кабинета')
-def auth_user():
-
+def logout_user(response: Response):
+    response.delete_cookie(key="users_access_token")
     return {'message': 'success', 'detail': 'Успешный выход'}
 

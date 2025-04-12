@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Response, HTTPException, status, Path
+from fastapi import APIRouter, Response, HTTPException, status, Path, Depends
 from typing import Annotated
-from schemas.user import SUserAuth, SUserRegister, SUser, SUserID
+from schemas.user import SUserAuth, SUserRegister, SUserInfo, SUserID
 from schemas.balance import SBalance
 from schemas.paymenthistory import SPaymentHistory
-from services.crud.auth import authenticate_user, get_password_hash
+from services.auth.auth import AuthService
 from services.crud.usercrud import UsersCRUD
 from services.crud.paymenthistorycrud import PaymentHistoryCRUD
 from services.crud.taskshistorycrud import TasksHistoryCRUD
@@ -12,14 +12,8 @@ router = APIRouter(prefix='/users', tags=['Функции пользовател
 
 
 @router.get('/user', summary='Информация о пользователе')
-def get_user() -> dict:
+def get_user(user: SUserInfo = Depends(AuthService.get_current_user)) -> dict:
     
-    user_id = 1 #get user from jwt token now only 1
-
-    user = UsersCRUD.find_one_or_none_by_id(id = user_id)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail='Пользователь не найден')
     result = {'id':user.id, 
               'email':user.email, 
               'last_name':user.last_name,
@@ -30,40 +24,23 @@ def get_user() -> dict:
 
 
 @router.get('/balance', summary='Текущий баланс пользователя')
-def get_balance() -> dict:
-    user_id = 1 #get user from jwt token now only 1
-
-    user = UsersCRUD.find_one_or_none_by_id(id = user_id)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail='Пользователь не найден')
+def get_balance(user: SUserInfo = Depends(AuthService.get_current_user)) -> dict:
 
     return {'message':'success', 'detail': 'Успешно', 'name': 'balance', 'value': user.balance}
 
 
 @router.get('/loyalty', summary='Размер скидки пользователя по идентификатору')
-def get_loyalty() -> dict:
-    user_id = 1 #get user from jwt token now only 1
-    
-    user = UsersCRUD.find_one_or_none_by_id(id = user_id)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail='Пользователь не найден')
+def get_loyalty(user: SUserInfo = Depends(AuthService.get_current_user)) -> dict:
 
     return {'message':'success', 'detail': 'Успешно', 'name': 'loyalty', 'value': user.loyalty}
 
 
 
 @router.get('/balances/history', summary='История платежей')
-def get_balances_history() -> list:
-    user_id = 1 #get user from jwt token now only 1
+def get_balances_history(user: SUserInfo = Depends(AuthService.get_current_user)) -> list:
     
-    user = UsersCRUD.find_one_or_none_by_id(id = user_id)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail='Пользователь не найден')
     result = list()
-    for hop_item in PaymentHistoryCRUD.find_all_payments():
+    for hop_item in PaymentHistoryCRUD.find_all_by_user(user):
         result.append({'id': hop_item.id,
                       'user': hop_item.user_id,
                       'balance_before': hop_item.value_before,
@@ -76,16 +53,10 @@ def get_balances_history() -> list:
 
 
 @router.get('/tasks/history', summary='История запроов модели')
-def get_tasks_history() -> list:
-
-    user_id = 1 #get user from jwt token now only 1
+def get_tasks_history(user: SUserInfo = Depends(AuthService.get_current_user)) -> list:
     
-    user = UsersCRUD.find_one_or_none_by_id(id = user_id)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail='Пользователь не найден')
     result = list()
-    for hot_item in TasksHistoryCRUD.find_all_tasks():
+    for hot_item in TasksHistoryCRUD.find_all_by_user(user):
         result.append({'id': hot_item.id,
                       'user': hot_item.user_id,
                       'image': hot_item.image,
@@ -99,24 +70,16 @@ def get_tasks_history() -> list:
 
 
 @router.post('/deposit', summary='Пополнить баланс')
-def set_new_balance(new_balance: SBalance) -> dict:
-
-    user_id = 1 #get user from jwt token now only 1
-
-    user_data = SUserID(id = user_id)
+def set_new_balance(new_balance: SBalance, user_data: SUserInfo = Depends(AuthService.get_current_user)) -> dict:
     
-    user = UsersCRUD.find_one_or_none_by_id(user_data)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail='Пользователь не найден')
-    balance = UsersCRUD.get_balance_by_id(user_data)
-    ph = SPaymentHistory(user_id=user_id, 
+    balance = UsersCRUD.get_balance_by_id(SUserID(id=user_data.id))
+    ph = SPaymentHistory(user_id=user_data.id, 
                             value=new_balance.balance,
                             value_before=balance,
                             value_after=balance+new_balance.balance,
                             status='pending')
     pay_item = PaymentHistoryCRUD.add(ph)
-    UsersCRUD.add_payment_by_id(user_data, new_balance.balance)
+    UsersCRUD.add_payment_by_id(SUserID(id=user_data.id), new_balance.balance)
     PaymentHistoryCRUD.update_status_by_id(pay_item.id, 'complete')
     
     return {'message': 'success', 'detail': 'Баланс успешно пополнен'}

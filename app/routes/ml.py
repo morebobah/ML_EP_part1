@@ -1,7 +1,7 @@
 import uuid, base64, json
 from fastapi import APIRouter, Response, HTTPException, status, File, Path, Form, Depends
 from typing import Annotated
-from services.crud.auth import authenticate_user, get_password_hash
+from services.auth.auth import AuthService
 from services.crud.usercrud import UsersCRUD
 from services.crud.paymenthistorycrud import PaymentHistoryCRUD
 from services.crud.taskshistorycrud import TasksHistoryCRUD
@@ -49,7 +49,7 @@ def upload_task(image: Annotated[bytes, File()],
    
     
     th_item = {'user_id': user_data.id,
-               'image': file_name,
+               'image': file_name[-40:],
                'status': 'pending',
                'result': '', 
                'cost': model_cost}
