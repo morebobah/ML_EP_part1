@@ -1,8 +1,10 @@
+import os
 import pika, logging, json, time, base64
 import httpx
-#import torch
-#from PIL import Image
-#from transformers import TrOCRProcessor, VisionEncoderDecoderModel
+import torch
+from PIL import Image
+from transformers import TrOCRProcessor, VisionEncoderDecoderModel
+
 
 model_cost = 30.0
 
@@ -29,28 +31,33 @@ channel = connection.channel()
 
 queue_name = 'ml_task_queue'
 channel.queue_declare(queue=queue_name)
+model_name = "emelnov/ocr-captcha-v4-mailru"
+processor = TrOCRProcessor.from_pretrained(model_name)
+model = VisionEncoderDecoderModel.from_pretrained(model_name).to(
+    torch.device("cuda" if torch.cuda.is_available() else "cpu")
+)
 
-#def predict_text(image_data):
-#    image = Image.frombytes('RGBA', (128,128), image_data)
-#    pixel_values = processor(images=image, return_tensors="pt").pixel_values.to(model.device)
-#    model.eval()
-#    with torch.no_grad():
-#        output_ids = model.generate(pixel_values)
-#    predicted_text = processor.batch_decode(output_ids, skip_special_tokens=True)[0]
-#    return predicted_text
+def predict_text(image_path):
+    image = Image.open(image_path).convert("RGB")
+    #image = Image.frombytes('RGBA', (128,128), image_data)
+    pixel_values = processor(images=image, return_tensors="pt").pixel_values.to(model.device)
+    model.eval()
+    with torch.no_grad():
+        output_ids = model.generate(pixel_values)
+    predicted_text = processor.batch_decode(output_ids, skip_special_tokens=True)[0]
+    return predicted_text
 
 def callback(ch, method, properties, body, *args, **kwargs):
     payload = json.loads(body)
     file_name = payload['image']
     image = base64.b64decode(payload['bytes'])
+    print(f'butt {file_name}')
+    with open(f'./files/{file_name}', 'wb') as f:
+        f.write(image)
 
-    #model_name = "emelnov/ocr-captcha-v4-mailru"
-    #processor = TrOCRProcessor.from_pretrained(model_name)
-    #model = VisionEncoderDecoderModel.from_pretrained(model_name).to(
-    #    torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    #)
-    #predict_text(image)
-    result = 'ml solved string'
+    result = predict_text(f'./files/{file_name}')
+    os.remove(f'./files/{file_name}')
+
     
     data = {'task_id': payload['task_id'],
             'user_id': payload['user_id'],
