@@ -87,7 +87,8 @@ def login(request: Request):
 
 
 @router.get("/logout", summary='Покиинуть личный кабинет!')
-def logout(request: Request):
+def logout(response: Response, request: Request):
+    response.delete_cookie(key=settings.COOKIE_NAME)
     return templates.TemplateResponse(name='auth.html', context={'request': request})
 
 

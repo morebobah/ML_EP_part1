@@ -6,8 +6,8 @@ from services.crud.usercrud import UsersCRUD
 from services.crud.paymenthistorycrud import PaymentHistoryCRUD
 from services.crud.taskshistorycrud import TasksHistoryCRUD
 from models.taskshistory import TasksHistory
-from schemas.user import SUserID
-from schemas.taskshistory import STasksHistory, STaskComplete, STaskID
+from schemas.user import SUserID, SUserInfo
+from schemas.taskshistory import STasksHistory, STaskComplete, STaskID, STasksInfo
 from schemas.paymenthistory import SPaymentHistory
 from schemas.balance import SBalance, SLoyalty
 from services.rm.rm import RabbitMQSender
@@ -19,9 +19,11 @@ router = APIRouter(prefix='/ml', tags=['Загрузка данных для м�
 def user_checker(user_id: int = Form(...)):
    return user_id
 
+
 @router.post("/task", summary='Создать запрос на обработку изображения')
 def upload_task(image: Annotated[bytes, File()],
-                user_id: dict = Depends(user_checker)):
+                user_id: dict = Depends(user_checker),
+                user: SUserInfo = Depends(AuthService.get_current_user)):
     model_cost = 30.0
 
     user_data = SUserID(id=user_id)
