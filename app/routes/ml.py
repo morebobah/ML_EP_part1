@@ -20,6 +20,20 @@ def user_checker(user_id: int = Form(...)):
    return user_id
 
 
+@router.get("/task/{taskid}", summary='Информация по задаче')
+def get_task(taskid: Annotated[int, Path(title='Идентификатор задачи', gt=0)], 
+             user: SUserInfo = Depends(AuthService.get_current_user)):
+    task_query = STasksInfo(id=taskid, user_id=user.id)
+    task_info = TasksHistoryCRUD.find_one_or_none(task_query)
+    th_item = {'id': task_info.id,
+               'user_id': task_info.user_id,
+               'image': task_info.image[-40:],
+               'status': task_info.status,
+               'result': task_info.result, 
+               'cost': task_info.cost}
+    return th_item
+
+
 @router.post("/task", summary='Создать запрос на обработку изображения')
 def upload_task(image: Annotated[bytes, File()],
                 user_id: dict = Depends(user_checker),

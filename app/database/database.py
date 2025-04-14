@@ -3,7 +3,7 @@ from database.config import get_settings
 from datetime import datetime
 from typing import Annotated
 
-from sqlalchemy import func, create_engine, text
+from sqlalchemy import func, create_engine, text, String
 from sqlalchemy.orm import DeclarativeBase, mapped_column
 from sqlalchemy.orm import sessionmaker, Session
 
