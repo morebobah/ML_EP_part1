@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Request, HTTPException, Response
+from fastapi import APIRouter, Request, HTTPException, Response, Depends
 from fastapi.templating import Jinja2Templates
 from database.config import get_settings
 from fastapi.responses import RedirectResponse
-from schemas.user import SUserAuth, SUserRegister, SUser, SUserID
+from schemas.user import SUserAuth, SUserRegister, SUser, SUserID, SUserInfo
 from services.crud.usercrud import UsersCRUD
 from services.crud.paymenthistorycrud import PaymentHistoryCRUD
 from services.crud.taskshistorycrud import TasksHistoryCRUD
@@ -110,7 +110,7 @@ def ml_worker(request: Request):
     },
     response_class=Response
 )
-def get_image(file: str):
+def get_image(file: str, user: SUserInfo = Depends(AuthService.get_current_user)):
     with open(f'./files/{file}', 'rb') as f:
         image_bytes: bytes = f.read()
     return Response(content=image_bytes, media_type="image/png")
