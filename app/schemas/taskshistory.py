@@ -19,3 +19,7 @@ class STaskComplete(BaseModel):
 
 class STaskID(BaseModel):
     id: int = Field(...)
+
+class STasksInfo(BaseModel):
+    id: int = Field(...)
+    user_id: int = Field(...)

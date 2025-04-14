@@ -49,20 +49,59 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
+                        <script>
+                            function load_updates(status_object, result_object, task_id)
+                            {
+                                
+                                return one_more
+                            }
+                        </script>
                         {% for line in table %}
                         <tr class="table-row">
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{line['id']}}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <img src='/image/{{line['image']}}' width=50px height=20px>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{line['result']}}</td>
+                            <td id="result{{line['id']}}" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{line['result']}}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{line['cost']}}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{line['date']}}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td id="status{{line['id']}}" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {%if line['status']=='complete'%}
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{{line['status']}}</span>
                                 {% else %}
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">{{line['status']}}</span>
+                                    <script>
+                                        const status{{line['id']}} = document.getElementById('status{{line['id']}}');
+                                        const result{{line['id']}} = document.getElementById('result{{line['id']}}');
+                                        let retryDelay{{line['id']}} = 1000;
+                                        function fetchWithRetry{{line['id']}}() {
+                                            fetch("/ml/task/{{line['id']}}", {method: "GET"})
+                                              .then(response => {
+                                                if (!response.ok) throw new Error('Ошибка сети');
+                                                retryDelay{{line['id']}} = 1000;  // Сброс задержки при успехе
+                                                return response.json();
+                                              })
+                                              .then(json => {
+                                                if(Object.keys(json).includes('status'))
+                                                    if(json['status']=='complete')
+                                                    {
+                                                        status{{line['id']}}.innerHTML = '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">complete</span>'
+                                                        result{{line['id']}}.innerHTML = json['result']
+                                                        balanceUpdate()
+                                                    }else{
+                                                        setTimeout(fetchWithRetry{{line['id']}}, retryDelay{{line['id']}});
+                                                        retryDelay{{line['id']}} *= 2;
+                                                    }
+                                                
+                                              })
+                                              .catch(error => {
+                                                console.error('Ошибка:', error);
+                                                setTimeout(fetchWithRetry{{line['id']}}, retryDelay{{line['id']}});
+                                                retryDelay{{line['id']}} *= 2;
+                                              });
+                                          }
+                                          setTimeout(fetchWithRetry{{line['id']}}, retryDelay{{line['id']}});
+                                    </script>
                                 {% endif %}
                             </td>
                         </tr>
@@ -128,7 +167,7 @@
         {
             console.log(error);
             showNotification('error', error);
-        })
+        });
         event.preventDefault();
     });
 

@@ -9,6 +9,19 @@ class TasksHistoryCRUD:
     model = TasksHistory
 
     @classmethod
+    def find_one_or_none(cls, filters: BaseModel):
+        filter_dict = filters.model_dump(exclude_unset=True)
+        with session_maker() as session:
+            try:
+                query = select(cls.model).filter_by(**filter_dict)
+                result = session.execute(query)
+                record = result.scalar_one_or_none()
+                return record
+            except SQLAlchemyError as e:
+                raise
+            
+
+    @classmethod
     def find_all_tasks(cls):
         with session_maker() as session:
             query = select(cls.model)

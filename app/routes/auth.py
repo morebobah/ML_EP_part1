@@ -53,6 +53,6 @@ def login_user(response: Response, user_data: SUserAuth):
 
 @router.get("/logout", summary='Выход из личного кабинета')
 def logout_user(response: Response):
-    response.delete_cookie(key="users_access_token")
+    response.delete_cookie(key=settings.COOKIE_NAME)
     return {'message': 'success', 'detail': 'Успешный выход'}
 
