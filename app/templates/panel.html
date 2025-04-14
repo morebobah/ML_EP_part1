@@ -1,0 +1,49 @@
+<!-- Шапка с навигацией -->
+<header class="bg-white py-4 px-6 shadow-sm">
+    <div class="container mx-auto flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-blue-600">BrainBot</h1>
+        {% if user is defined %}
+        <nav class="flex space-x-4">
+            {{user.first_name}} ({{user.email}}) - balance:&nbsp;<span id="user_balance">{{user.balance}}</span>
+        </nav>
+        {% endif %}
+        
+        <nav class="flex space-x-4">
+            {% for key, value in panel.items() %}
+                <button class="nav-btn p-2 rounded-full hover:bg-blue-50 transition-colors" title="{{key}}">
+                    <i class="fas {{value[1]}} text-blue-600 text-xl" switch='{{value[0]}}'></i>
+                </button>
+            {% endfor %}
+        </nav>
+    </div>
+</header>
+<script>
+    const formDataToJson = (formData) => JSON.stringify(Object.fromEntries(formData));
+    // Анимация кнопок навигации
+    const navButtons = document.querySelectorAll('.nav-btn');
+    navButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            switch(this.querySelector('i').getAttribute('switch'))
+            {
+                case "Out":
+                    fetch('/auth/logout')
+                    .then(response => response.json())
+                    .then(json => console.log(json))
+                    .then(response => window.location.href = '/login')
+                    .catch(error => console.log(error))
+                    break
+                case "In":
+                    window.location.href = '/login'
+                    break
+                case "Pay":
+                    window.location.href = '/balance'
+                    break
+                case "ML":
+                    window.location.href = '/'
+                    break
+                default:
+                console.log('No action found')
+            }
+        });
+    });
+</script>

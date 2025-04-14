@@ -19,7 +19,7 @@ class PaymentHistoryCRUD():
     def find_all_by_user(cls, user: User):
         with session_maker() as session:
             try:
-                query = select(cls.model).filter_by(user_id=user.id)
+                query = select(cls.model).filter_by(user_id=user.id).order_by(cls.model.processed.desc())
                 Payments = session.execute(query)
                 return Payments.scalars().all()
             except SQLAlchemyError as e:

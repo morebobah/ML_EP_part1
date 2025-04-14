@@ -1,18 +1,20 @@
-from fastapi import APIRouter, Response, HTTPException, status, Path
+from fastapi import APIRouter, Response, HTTPException, status, Path, Depends
 from schemas.user import SUserAuth, SUserRegister, SUser, SUserID
 from schemas.paymenthistory import SPaymentHistory
 from schemas.balance import SBalance, SLoyalty
 from typing import Annotated
 from schemas.admin import SAdminID, SAdminEmail
-from services.crud.auth import authenticate_user, get_password_hash
+from schemas.user import SUserInfo
+from services.auth.auth import AuthService
 from services.crud.usercrud import UsersCRUD
 from services.crud.paymenthistorycrud import PaymentHistoryCRUD
 from services.crud.taskshistorycrud import TasksHistoryCRUD
+from services.auth.auth import AuthService
 
 router = APIRouter(prefix='/admin', tags=['Функции администратора'])
 
 @router.get('/users', summary='Получить список пользователей')
-def get_users() -> list:
+def get_users(admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> list:
     result = list()
     for user in UsersCRUD.find_all_users():
         result.append({'id': user.id,
@@ -26,7 +28,7 @@ def get_users() -> list:
 
 
 @router.get('/balances/history', summary='Получить историю платежей всех пользователей')
-def all_balances_history() -> list:
+def all_balances_history(admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> list:
     result = list()
     for hop_item in PaymentHistoryCRUD.find_all_payments():
         result.append({'id': hop_item.id,
@@ -40,7 +42,7 @@ def all_balances_history() -> list:
 
 
 @router.get('/tasks/history', summary='Получить историю запросов модели у всех пользователей')
-def all_tasks_history() -> list:
+def all_tasks_history(admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> list:
 
     result = list()
     for hot_item in TasksHistoryCRUD.find_all_tasks():
@@ -55,7 +57,8 @@ def all_tasks_history() -> list:
     return result
 
 @router.get('/user/{user_id}', summary='Информация о пользователе')
-def get_user(user_id: Annotated[int, Path(title='Идентификатор пользователя', gt=0)]) -> dict:
+def get_user(user_id: Annotated[int, Path(title='Идентификатор пользователя', gt=0)],
+             admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> dict:
 
     user = UsersCRUD.find_one_or_none_by_id(id = user_id)
     if user is None:
@@ -71,7 +74,8 @@ def get_user(user_id: Annotated[int, Path(title='Идентификатор по
 
 
 @router.get('/balance/{user_id}', summary='Текущий баланс пользователя')
-def get_balance(user_id: Annotated[int, Path(title='Идентификатор пользователя', gt=0)]) -> dict:
+def get_balance(user_id: Annotated[int, Path(title='Идентификатор пользователя', gt=0)],
+                admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> dict:
 
     user = UsersCRUD.find_one_or_none_by_id(id = user_id)
     if user is None:
@@ -82,7 +86,8 @@ def get_balance(user_id: Annotated[int, Path(title='Идентификатор �
 
 
 @router.get('/loyalty/{user_id}', summary='Размер скидки пользователя по идентификатору')
-def get_loyalty(user_id: Annotated[int, Path(title='Идентификатор пользователя', gt=0)]) -> dict:
+def get_loyalty(user_id: Annotated[int, Path(title='Идентификатор пользователя', gt=0)], 
+                admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> dict:
 
     user = UsersCRUD.find_one_or_none_by_id(id = user_id)
     if user is None:
@@ -94,7 +99,8 @@ def get_loyalty(user_id: Annotated[int, Path(title='Идентификатор �
 
 
 @router.get('/balances/history/user/{user_id}', summary='История платежей пользователя по идентификатору')
-def get_balances_history(user_id: Annotated[int, Path(title='Идентификатор пользователя', gt=0)]) -> list:
+def get_balances_history(user_id: Annotated[int, Path(title='Идентификатор пользователя', gt=0)],
+                         admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> list:
 
     user = UsersCRUD.find_one_or_none_by_id(id = user_id)
     if user is None:
@@ -114,7 +120,8 @@ def get_balances_history(user_id: Annotated[int, Path(title='Идентифик�
 
 
 @router.get('/tasks/history/user/{user_id}', summary='История запросов пользователем модели по идетификатору пользователя')
-def get_tasks_history(user_id: Annotated[int, Path(title='Идентификатор пользователя', gt=0)]) -> list:
+def get_tasks_history(user_id: Annotated[int, Path(title='Идентификатор пользователя', gt=0)],
+                      admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> list:
 
     user = UsersCRUD.find_one_or_none_by_id(id = user_id)
     if user is None:
@@ -134,20 +141,23 @@ def get_tasks_history(user_id: Annotated[int, Path(title='Идентификат
 
 
 @router.post('/user', summary='Создать нового пользователя')
-def create_users(user_data: SUserRegister) -> dict:
+def create_users(user_data: SUserRegister, 
+                 admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> dict:
+    user_data.email = str.lower(user_data.email)
     user = UsersCRUD.find_one_or_none_by_email(email = user_data.email)
     if user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail='Пользователь уже существует'
         )
-    user_data.password = get_password_hash(user_data.password)
+    user_data.password = AuthService.get_password_hash(user_data.password)
     user = UsersCRUD.add(user_data)
     return {'detail': f'Новый пользователь {user} зарегистрирован!'}
 
 
 @router.put('/balance/user/id', summary='Изменить баланс пользователя по id')
-def change_balance_by_id(id: SAdminID, new_balance: SBalance) -> dict:
+def change_balance_by_id(id: SAdminID, new_balance: SBalance,
+                         admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> dict:
     user = UsersCRUD.find_one_or_none_by_id(id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -167,7 +177,8 @@ def change_balance_by_id(id: SAdminID, new_balance: SBalance) -> dict:
 
 
 @router.put('/balance/user/email', summary='Изменить баланс пользователя по email')
-def change_balance_by_email(email: SAdminEmail, new_balance: SBalance) -> dict:
+def change_balance_by_email(email: SAdminEmail, new_balance: SBalance,
+                            admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> dict:
     user = UsersCRUD.find_one_or_none_by_email(email = email)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -187,7 +198,8 @@ def change_balance_by_email(email: SAdminEmail, new_balance: SBalance) -> dict:
 
 
 @router.put('/user/admin/id', summary='Предоставить права администратора по id')
-def change_allow_admin_by_id(id: SAdminID) -> dict:
+def change_allow_admin_by_id(id: SAdminID,
+                             admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> dict:
     user = UsersCRUD.find_one_or_none_by_id(id.id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -196,8 +208,9 @@ def change_allow_admin_by_id(id: SAdminID) -> dict:
     return {'message': 'success', 'detail': 'Права администратора предоставлены'}
 
 
-@router.delete('/user/admin/id', summary='Забрать права администратора по id')
-def change_disallow_admin_by_id(id: SAdminID) -> dict:
+@router.delete('/user/admin/id', summary='Запретить права администратора по id')
+def change_disallow_admin_by_id(id: SAdminID,
+                                admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> dict:
     user = UsersCRUD.find_one_or_none_by_id(id.id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -207,7 +220,8 @@ def change_disallow_admin_by_id(id: SAdminID) -> dict:
 
 
 @router.put('/user/admin/email', summary='Предоставить права администратора по email')
-def change_allow_admin_by_email(email: SAdminEmail) -> dict:
+def change_allow_admin_by_email(email: SAdminEmail,
+                                admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> dict:
     user = UsersCRUD.find_one_or_none_by_email(email = email)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -216,8 +230,9 @@ def change_allow_admin_by_email(email: SAdminEmail) -> dict:
     return {'message': 'success', 'detail': 'Права администратора предоставлены'}
 
 
-@router.delete('/user/admin/email', summary='Забрать права администратора по email')
-def change_disallow_admin_by_email(email: SAdminEmail) -> dict:
+@router.delete('/user/admin/email', summary='Запретить права администратора по email')
+def change_disallow_admin_by_email(email: SAdminEmail,
+                                   admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> dict:
     user = UsersCRUD.find_one_or_none_by_email(email = email)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,

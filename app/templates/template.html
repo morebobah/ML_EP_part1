@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Многофункциональный интерфейс</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .custom-border {
+            border: 3px solid #3b82f6;
+            border-radius: 16px;
+        }
+        .custom-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .input-focus:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        .table-row:hover {
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="bg-white min-h-screen font-sans">
+    <!-- Шапка с навигацией -->
+    <header class="bg-white py-4 px-6 shadow-sm">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-600">MyDashboard</h1>
+            <nav class="flex space-x-4">
+                <button class="nav-btn p-2 rounded-full hover:bg-blue-50 transition-colors" title="Вход">
+                    <i class="fas fa-sign-in-alt text-blue-600 text-xl"></i>
+                </button>
+                <button class="nav-btn p-2 rounded-full hover:bg-blue-50 transition-colors" title="Личный кабинет">
+                    <i class="fas fa-user-circle text-blue-600 text-xl"></i>
+                </button>
+                <button class="nav-btn p-2 rounded-full hover:bg-blue-50 transition-colors" title="Платежи">
+                    <i class="fas fa-credit-card text-blue-600 text-xl"></i>
+                </button>
+                <button class="nav-btn p-2 rounded-full hover:bg-blue-50 transition-colors" title="Задачи">
+                    <i class="fas fa-tasks text-blue-600 text-xl"></i>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto py-8 px-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Блок авторизации -->
+            <div class="custom-border bg-white p-6 custom-shadow">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Авторизация</h2>
+                <form class="space-y-4">
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Имя пользователя</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            <input type="text" id="username" 
+                                   class="input-focus pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 transition-colors">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Пароль</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-lock text-gray-400"></i>
+                            </div>
+                            <input type="password" id="password" 
+                                   class="input-focus pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 transition-colors">
+                        </div>
+                    </div>
+                    <button type="submit" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                        Войти
+                    </button>
+                </form>
+            </div>
+            <div class="custom-border bg-white p-6 custom-shadow">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Пополнение баланса</h2>
+                <form id="payment-form" class="space-y-4">
+                    <div>
+                        <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Сумма (руб.)</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-ruble-sign text-gray-400"></i>
+                            </div>
+                            <input type="number" id="amount" min="10" step="10" value="100" 
+                                   class="input-focus pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 transition-colors">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Способ оплаты</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="payment-method border border-gray-200 rounded-lg p-3 cursor-pointer flex flex-col items-center"
+                                 data-method="card">
+                                <i class="fas fa-credit-card text-blue-500 text-2xl mb-1"></i>
+                                <span class="text-xs font-medium">Карта</span>
+                            </div>
+                            <div class="payment-method border border-gray-200 rounded-lg p-3 cursor-pointer flex flex-col items-center"
+                                 data-method="qiwi">
+                                <i class="fas fa-wallet text-purple-500 text-2xl mb-1"></i>
+                                <span class="text-xs font-medium">QIWI</span>
+                            </div>
+                            <div class="payment-method border border-gray-200 rounded-lg p-3 cursor-pointer flex flex-col items-center"
+                                 data-method="yoomoney">
+                                <i class="fas fa-money-bill-wave text-yellow-500 text-2xl mb-1"></i>
+                                <span class="text-xs font-medium">ЮMoney</span>
+                            </div>
+                            <div class="payment-method border border-gray-200 rounded-lg p-3 cursor-pointer flex flex-col items-center"
+                                 data-method="crypto">
+                                <i class="fas fa-coins text-gray-500 text-2xl mb-1"></i>
+                                <span class="text-xs font-medium">Крипта</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="payment-method" name="payment-method" value="card">
+                    </div>
+                    
+                    <div class="pt-2">
+                        <button type="submit" 
+                                class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center">
+                            <i class="fas fa-plus-circle mr-2"></i> Пополнить баланс
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Блок загрузки изображения -->
+            <div class="custom-border bg-white p-6 custom-shadow">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Загрузка изображения</h2>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-center w-full">
+                        <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                                <p class="text-sm text-gray-500">Перетащите изображение сюда или кликните для выбора</p>
+                            </div>
+                            <input id="dropzone-file" type="file" class="hidden" accept="image/*" />
+                        </label>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">Макс. размер: 5MB</span>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-1 px-3 rounded transition-colors">
+                            <i class="fas fa-upload mr-1"></i> Загрузить
+                        </button>
+                    </div>
+                    <div id="preview-container" class="hidden mt-4">
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Предпросмотр:</h3>
+                        <img id="preview-image" class="max-h-40 rounded border border-gray-200 mx-auto">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Блок таблицы -->
+            <div class="md:col-span-2 custom-border bg-white p-6 custom-shadow">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Табличные данные</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr class="table-row">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">1</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Проект Alpha</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активен</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-05-15</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3"><i class="fas fa-eye"></i></button>
+                                    <button class="text-yellow-600 hover:text-yellow-900 mr-3"><i class="fas fa-edit"></i></button>
+                                    <button class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr class="table-row">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Проект Beta</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">На паузе</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-06-22</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3"><i class="fas fa-eye"></i></button>
+                                    <button class="text-yellow-600 hover:text-yellow-900 mr-3"><i class="fas fa-edit"></i></button>
+                                    <button class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr class="table-row">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">3</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Проект Gamma</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Завершен</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-07-10</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3"><i class="fas fa-eye"></i></button>
+                                    <button class="text-yellow-600 hover:text-yellow-900 mr-3"><i class="fas fa-edit"></i></button>
+                                    <button class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4 flex justify-between items-center">
+                    <div class="text-sm text-gray-500">
+                        Показано <span class="font-medium">1</span> - <span class="font-medium">3</span> из <span class="font-medium">3</span> записей
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="px-3 py-1 border border-blue-500 rounded text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                            1
+                        </button>
+                        <button class="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Обработка загрузки изображения с предпросмотром
+        const dropzone = document.getElementById('dropzone-file');
+        const previewContainer = document.getElementById('preview-container');
+        const previewImage = document.getElementById('preview-image');
+
+        dropzone.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    previewImage.src = event.target.result;
+                    previewContainer.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Анимация кнопок навигации
+        const navButtons = document.querySelectorAll('.nav-btn');
+        navButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Здесь можно добавить логику для каждой кнопки
+                alert('Нажата кнопка: ' + this.querySelector('i').getAttribute('title'));
+            });
+        });
+    </script>
+</body>
+</html>
