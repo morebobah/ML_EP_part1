@@ -7,40 +7,25 @@ from api import app  # Импортируйте ваш FastAPI app
 from schemas.user import SUserInfo, SUserID, SUserEmail, SUserAuth
 from schemas.balance import SBalance
 from schemas.paymenthistory import SPaymentHistory
+from schemas.user import SUserRegister, SUserAuth
+from services.crud.usercrud import UsersCRUD
+from services.auth.auth import AuthService
 
 client = TestClient(app)
 
-# Фикстуры для моков
-@pytest.fixture
-def mock_auth_service():
-    with patch('services.auth.auth.AuthService.get_current_user') as mock:
-        yield mock
-
-@pytest.fixture
-def mock_users_crud():
-    with patch('services.crud.usercrud.UsersCRUD') as mock:
-        yield mock
-
-@pytest.fixture
-def mock_payment_history_crud():
-    with patch('services.crud.paymenthistorycrud.PaymentHistoryCRUD') as mock:
-        yield mock
-
-@pytest.fixture
-def mock_tasks_history_crud():
-    with patch('services.crud.taskshistorycrud.TasksHistoryCRUD') as mock:
-        yield mock
-
 # Тестовые данные
-TEST_USER = SUserInfo(
+TEST_USER = Mock(
     id=1,
     email="test@example.com",
+    password="hashedpassword",
     last_name="Doe",
     first_name="John",
     is_admin=False,
     balance=100.0,
     loyalty=5.0
 )
+
+
 
 TEST_PAYMENT_HISTORY = [
     {
@@ -66,10 +51,138 @@ TEST_TASKS_HISTORY = [
     }
 ]
 
+TEST_REGISTER_DATA = {
+    "email": "test@example.com",
+    "password": "strongpassword",
+    "last_name": "Doe",
+    "first_name": "John"
+}
+
+TEST_LOGIN_DATA = {
+    "email": "test@example.com",
+    "password": "strongpassword"
+}
+
+
 # Тесты для эндпоинтов
+
+class TestAuthRouter:
+    @patch.object(UsersCRUD, 'find_one_or_none_by_email')
+    @patch.object(AuthService, 'get_password_hash')
+    @patch.object(UsersCRUD, 'add')
+    @patch.object(AuthService, 'authenticate_user')
+    @patch.object(AuthService, 'create_access_token')
+    def test_register_user_success(
+        self, 
+        mock_create_token, 
+        mock_authenticate, 
+        mock_add_user, 
+        mock_hash, 
+        mock_find_user,
+        mock_user_data,
+        mock_user_db_entry
+    ):
+        # Настройка моков
+        mock_find_user.return_value = None
+        mock_hash.return_value = "hashedpassword"
+        mock_authenticate.return_value = mock_user_db_entry
+        mock_create_token.return_value = "test_token"
+        
+        # Вызов тестируемого эндпоинта
+        response = client.post("/auth/register", json=mock_user_data)
+        
+        # Проверки
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == {
+            "message": "success", 
+            "detail": "Вы успешно зарегистрированы!"
+        }
+        assert "set-cookie" in response.headers
+        
+        # Проверка вызовов моков
+        mock_find_user.assert_called_once()
+        mock_hash.assert_called_once_with(mock_user_data["password"])
+        mock_add_user.assert_called_once()
+        mock_authenticate.assert_called_once()
+        mock_create_token.assert_called_once()
+
+    @patch.object(UsersCRUD, 'find_one_or_none_by_email')
+    def test_register_user_conflict(self, mock_find_user, mock_user_data):
+        # Настройка мока - пользователь уже существует
+        mock_find_user.return_value = {"email": mock_user_data["email"]}
+        
+        # Вызов и проверка
+        response = client.post("/auth/register", json=mock_user_data)
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.json()["detail"] == "Пользователь уже существует"
+
+    @patch.object(AuthService, 'authenticate_user')
+    @patch.object(AuthService, 'create_access_token')
+    def test_login_user_success(
+        self, 
+        mock_create_token, 
+        mock_authenticate,
+        mock_user_auth_data,
+        mock_user_db_entry
+    ):
+        # Настройка моков
+        mock_authenticate.return_value = mock_user_db_entry
+        mock_create_token.return_value = "test_token"
+        
+        # Вызов тестируемого эндпоинта
+        response = client.post("/auth/login", json=mock_user_auth_data)
+        
+        # Проверки
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == {
+            "message": "success", 
+            "detail": "Успешная авторизация"
+        }
+        assert "set-cookie" in response.headers
+        
+        # Проверка вызовов моков
+        mock_authenticate.assert_called_once()
+        mock_create_token.assert_called_once()
+
+    @patch.object(AuthService, 'authenticate_user')
+    def test_login_user_unauthorized(self, mock_authenticate, mock_user_auth_data):
+        # Настройка мока - аутентификация не прошла
+        mock_authenticate.return_value = None
+        
+        # Вызов и проверка
+        response = client.post("/auth/login", json=mock_user_auth_data)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert response.json()["detail"] == "Неверное имя пользователя или пароль"
+
+    def test_logout_user(self):
+        # Сначала логинимся, чтобы установить куки
+        with patch.object(AuthService, 'authenticate_user', return_value={"id": 1}):
+            with patch.object(AuthService, 'create_access_token', return_value="token"):
+                client.post("/auth/login", json={
+                    "email": "test@example.com",
+                    "password": "password"
+                })
+        
+        # Тестируем выход
+        response = client.get("/auth/logout")
+        
+        # Проверки
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == {
+            "message": "success", 
+            "detail": "Успешный выход"
+        }
+        assert "set-cookie" in response.headers
+        assert "expires=0" in response.headers["set-cookie"]
+
+
+
 class TestUserEndpoints:
     def test_get_user_info(self, mock_auth_service):
-        mock_auth_service.return_value = TEST_USER
+        mock_auth_service.get_current_user.return_value = TEST_USER
+        response = client.post("/auth/login")
+        assert response.status_code == 200
+
         
         response = client.get("/users/user")
         
@@ -84,7 +197,7 @@ class TestUserEndpoints:
         }
 
     def test_get_balance(self, mock_auth_service):
-        mock_auth_service.return_value = TEST_USER
+        mock_auth_service.get_current_user.return_value = TEST_USER
         
         response = client.get("/users/balance")
         
@@ -97,7 +210,7 @@ class TestUserEndpoints:
         }
 
     def test_get_loyalty(self, mock_auth_service):
-        mock_auth_service.return_value = TEST_USER
+        mock_auth_service.get_current_user.return_value = TEST_USER
         
         response = client.get("/users/loyalty")
         
@@ -111,7 +224,7 @@ class TestUserEndpoints:
 
 class TestPaymentHistoryEndpoints:
     def test_get_balances_history(self, mock_auth_service, mock_payment_history_crud):
-        mock_auth_service.return_value = TEST_USER
+        mock_auth_service.get_current_user.return_value = TEST_USER
         mock_payment_history_crud.find_all_by_user.return_value = TEST_PAYMENT_HISTORY
         
         response = client.get("/users/balances/history")
@@ -121,7 +234,7 @@ class TestPaymentHistoryEndpoints:
         assert response.json()[0]["user"] == 1
 
     def test_deposit_balance(self, mock_auth_service, mock_users_crud, mock_payment_history_crud):
-        mock_auth_service.return_value = TEST_USER
+        mock_auth_service.get_current_user.return_value = TEST_USER
         mock_users_crud.get_balance_by_id.return_value = 100.0
         mock_payment_history_crud.add.return_value = Mock(id=1)
         
@@ -142,7 +255,7 @@ class TestPaymentHistoryEndpoints:
         mock_payment_history_crud.update_status_by_id.assert_called_once_with(1, 'complete')
 
     def test_deposit_negative_balance(self, mock_auth_service):
-        mock_auth_service.return_value = TEST_USER
+        mock_auth_service.get_current_user.return_value = TEST_USER
         
         deposit_data = {"balance": -50.0}
         
@@ -152,7 +265,7 @@ class TestPaymentHistoryEndpoints:
 
 class TestTasksHistoryEndpoints:
     def test_get_tasks_history(self, mock_auth_service, mock_tasks_history_crud):
-        mock_auth_service.return_value = TEST_USER
+        mock_auth_service.get_current_user.return_value = TEST_USER
         mock_tasks_history_crud.find_all_by_user.return_value = TEST_TASKS_HISTORY
         
         response = client.get("/users/tasks/history")
@@ -174,42 +287,6 @@ def test_unauthorized_access():
         assert response.status_code == 401
 
 
-@pytest.fixture
-def mock_auth_service():
-    with patch('services.auth.auth.AuthService') as mock:
-        yield mock
-
-@pytest.fixture
-def mock_users_crud():
-    with patch('services.crud.usercrud.UsersCRUD') as mock:
-        yield mock
-
-@pytest.fixture
-def mock_settings():
-    with patch('database.config.get_settings') as mock:
-        mock.return_value = Mock(COOKIE_NAME="auth_token")
-        yield mock
-
-# Тестовые данные
-TEST_REGISTER_DATA = {
-    "email": "test@example.com",
-    "password": "strongpassword",
-    "last_name": "Doe",
-    "first_name": "John"
-}
-
-TEST_LOGIN_DATA = {
-    "email": "test@example.com",
-    "password": "strongpassword"
-}
-
-TEST_USER = Mock(
-    id=1,
-    email="test@example.com",
-    password="hashedpassword",
-    last_name="Doe",
-    first_name="John"
-)
 
 class TestAuthEndpoints:
     def test_register_new_user_success(self, mock_auth_service, mock_users_crud, mock_settings):

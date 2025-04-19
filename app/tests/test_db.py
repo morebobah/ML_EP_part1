@@ -8,20 +8,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from datetime import datetime
 
-@pytest.fixture(name='engine')
-def engine():
-    # Используем SQLite в памяти для тестов
-    return create_engine("sqlite:///:memory:")
-
-
-@pytest.fixture(name='session')
-def session(engine):
-    # Создаем таблицы и сессию для тестов
-    Base.metadata.create_all(engine)
-    with Session(engine) as session:
-        yield session
-    Base.metadata.drop_all(engine)
-
 
 def test_user_creation(session):
     """Тест создания пользователя с валидными данными"""
