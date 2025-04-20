@@ -28,6 +28,7 @@ def get_task(taskid: Annotated[int, Path(title='Идентификатор за�
     th_item = {'id': task_info.id,
                'user_id': task_info.user_id,
                'image': task_info.image[-40:],
+               'date': task_info.processed,
                'status': task_info.status,
                'result': task_info.result, 
                'cost': task_info.cost}

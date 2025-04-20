@@ -10,17 +10,18 @@ from services.crud.usercrud import UsersCRUD
 from schemas.user import SUser, SUserEmail
 from models.paymenthistory import PaymentHistory
 from models.taskshistory import TasksHistory
+from services.auth.auth import AuthService
 import uvicorn
 
 
 
 def lifespan(app: FastAPI):
-    #init_db()
+    init_db()
     
     user = SUser(first_name='User', 
                  last_name='Test', 
                  email='User@Test.ru', 
-                 password='testpwd',
+                 password=AuthService.get_password_hash('testpwd'),
                  is_admin=False, 
                  balance=0.0,
                  loyalty=1.0)
@@ -29,10 +30,10 @@ def lifespan(app: FastAPI):
         UsersCRUD.add(user)
 
 
-    admin = SUser(first_name='Admin', 
-                 last_name='Test', 
-                 email='Admin@Test.ru', 
-                 password='testadminpwd',
+    admin = SUser(first_name='Administrator', 
+                 last_name='Superuser', 
+                 email='admin@test.ru', 
+                 password=AuthService.get_password_hash('testadminpwd'),
                  is_admin=True, 
                  balance=0.0,
                  loyalty=1.0)

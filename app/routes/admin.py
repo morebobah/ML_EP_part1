@@ -4,7 +4,7 @@ from schemas.paymenthistory import SPaymentHistory
 from schemas.balance import SBalance, SLoyalty
 from typing import Annotated
 from schemas.admin import SAdminID, SAdminEmail
-from schemas.user import SUserInfo
+from schemas.user import SUserInfo, SUserID
 from services.auth.auth import AuthService
 from services.crud.usercrud import UsersCRUD
 from services.crud.paymenthistorycrud import PaymentHistoryCRUD
@@ -77,7 +77,7 @@ def get_user(user_id: Annotated[int, Path(title='Идентификатор по
 def get_balance(user_id: Annotated[int, Path(title='Идентификатор пользователя', gt=0)],
                 admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> dict:
 
-    user = UsersCRUD.find_one_or_none_by_id(id = user_id)
+    user = UsersCRUD.find_one_or_none_by_id(SUserID(id = user_id))
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail='Пользователь не найден')
@@ -144,7 +144,7 @@ def get_tasks_history(user_id: Annotated[int, Path(title='Идентификат
 def create_users(user_data: SUserRegister, 
                  admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> dict:
     user_data.email = str.lower(user_data.email)
-    user = UsersCRUD.find_one_or_none_by_email(email = user_data.email)
+    user = UsersCRUD.find_one_or_none_by_email(SAdminEmail(email = user_data.email))
     if user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -152,7 +152,12 @@ def create_users(user_data: SUserRegister,
         )
     user_data.password = AuthService.get_password_hash(user_data.password)
     user = UsersCRUD.add(user_data)
-    return {'detail': f'Новый пользователь {user} зарегистрирован!'}
+    user = UsersCRUD.find_one_or_none_by_email(SAdminEmail(email = user_data.email))
+    return {'detail': f'Новый пользователь зарегистрирован!',
+            'id': user.id, 
+            'email': user.email,
+            'balance': user.balance,
+            'admin': user.is_admin}
 
 
 @router.put('/balance/user/id', summary='Изменить баланс пользователя по id')
@@ -200,7 +205,7 @@ def change_balance_by_email(email: SAdminEmail, new_balance: SBalance,
 @router.put('/user/admin/id', summary='Предоставить права администратора по id')
 def change_allow_admin_by_id(id: SAdminID,
                              admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> dict:
-    user = UsersCRUD.find_one_or_none_by_id(id.id)
+    user = UsersCRUD.find_one_or_none_by_id(id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail='Пользователь не найден')
@@ -211,7 +216,7 @@ def change_allow_admin_by_id(id: SAdminID,
 @router.delete('/user/admin/id', summary='Запретить права администратора по id')
 def change_disallow_admin_by_id(id: SAdminID,
                                 admin_data: SUserInfo = Depends(AuthService.get_current_admin_user)) -> dict:
-    user = UsersCRUD.find_one_or_none_by_id(id.id)
+    user = UsersCRUD.find_one_or_none_by_id(id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail='Пользователь не найден')
