@@ -86,29 +86,30 @@
                 </tbody>
             </table>
         </div>
-        <div class="mt-4 flex justify-between items-center">
-            <div class="text-sm text-gray-500">
-                Показано <span class="font-medium">1</span> - <span class="font-medium">3</span> из <span class="font-medium">3</span> записей
-            </div>
-            <div class="flex space-x-2">
-                <button class="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <button class="px-3 py-1 border border-blue-500 rounded text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors">
-                    1
-                </button>
-                <button class="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
-        </div>
+        {% include "paginator.html" %}
     </div>
 </main>
 <script>
+    function insertRowToTop(tableData)
+    {
+        const tbody = document.querySelector('tbody.bg-white.divide-y.divide-gray-200');
+        const newRow = document.createElement('tr');
+        newRow.className = 'table-row';
+        
+        newRow.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${tableData.id}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tableData.date}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tableData.pay}</td>
+            <td id="status${tableData.id}" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">complete</span>'
+            </td>
+        `;
+        tbody.insertBefore(newRow, tbody.firstChild);
+    }
     const submitBTN = document.getElementById('submit-btn');
     function updatePage()
     {
-        window.location.href = '/balance'
+        //window.location.href = '/balance'
     }
 
     submitBTN.addEventListener('click', function(event)
@@ -124,26 +125,26 @@
             method: "POST", 
             body: formDataToJson(formData)
         })
-        .then(response => 
+        .then(async (response) => 
         {
-            if(response.status>199 && response.status<300) return response.json();
-            throw new Error(response.status);
+            if(response.ok) return response.json();
+            let errorData = await response.json();
+            throw {'status': response.status, 'data': errorData };
         })
         .then(json => 
         {
-            if(Object.keys(json).includes('message'))
-                if(json['message']=='success')
-                    if(Object.keys(json).includes('detail'))
-                    {
-                        showNotification('success', json['detail']);
-                        updatePage();
-                    }
-
+            console.log(json)
+            const message = json?.message || "fail";
+            const detail = json?.detail || "Успешно, но неизвестно как!";
+            insertRowToTop(json);
+            updateTablePagination();
+            showNotification('success', detail);
+            balanceUpdate();
         })
-        .catch( error =>
+        .catch( e =>
         {
-            console.log(error);
-            showNotification('error', error);
+            const detail = e?.data?.detail || "Неизвестная ошибка";
+            detail.forEach((elem) => showNotification('error', elem.msg));
         })
         event.preventDefault();
     });

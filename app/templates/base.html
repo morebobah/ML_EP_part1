@@ -38,6 +38,13 @@
         .notification.fade-out {
             animation: fadeOut 0.5s ease-out forwards;
         }
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #3b82f6;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #3b82f6;
+        }
     </style>
     <script>
     function showNotification(type, message) {

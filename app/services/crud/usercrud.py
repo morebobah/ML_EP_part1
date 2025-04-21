@@ -11,7 +11,7 @@ class UsersCRUD:
     @classmethod
     def find_all_users(cls):
         with session_maker() as session:
-            query = select(User)
+            query = select(User).order_by(cls.model.id.desc())
             users = session.execute(query)
             return users.scalars().all()
     
