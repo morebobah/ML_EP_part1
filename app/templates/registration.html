@@ -119,20 +119,21 @@
             method: "POST", 
             body: formDataToJson(formData)
         })
-        .then(response => 
+        .then(async (response) => 
         {
-            if(response.status>199 && response.status<300) return response.json();
-            throw new Error(response.status);
+            if(response.ok) return response.json();
+            let errorData = await response.json();
+            throw {'status': response.status, 'data': errorData };
         })
         .then(json => 
         {
-            if(Object.keys(json).includes('message'))
-                if(json['message']=='success') window.location.href = '/';
+            const result = json?.message || 'fail';
+            if(result==='success')window.location.href = '/';
         })
-        .catch( error =>
+        .catch( e =>
         {
-            console.log(error);
-            showNotification('error', error);
+            const detail = e?.data?.detail || "Неизвестная ошибка";
+            detail.forEach((elem) => showNotification('error', elem.msg));
         })
         event.preventDefault();
     });

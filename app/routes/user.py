@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Response, HTTPException, status, Path, Depends
 from typing import Annotated
 from schemas.user import SUserAuth, SUserRegister, SUserInfo, SUserID
-from schemas.balance import SBalance
+from schemas.balance import SBalance, SBalancePlus, SBalanceInfo
 from schemas.paymenthistory import SPaymentHistory
 from services.auth.auth import AuthService
 from services.crud.usercrud import UsersCRUD
@@ -68,9 +68,21 @@ def get_tasks_history(user: SUserInfo = Depends(AuthService.get_current_user)) -
     return result
 
 
+@router.get("/pay/{payid}", summary='Информация по платежу')
+def get_pay(payid: Annotated[int, Path(title='Идентификатор платежа', gt=0)], 
+             user: SUserInfo = Depends(AuthService.get_current_user)):
+    pay_query = SBalanceInfo(id=payid, user_id=user.id)
+    pay_info = PaymentHistoryCRUD.find_one_or_none(pay_query)
+    pay_item = {'id': pay_info.id,
+               'user_id': pay_info.user_id,
+               'value': pay_info.value,
+               'date': pay_info.processed,
+               'status': pay_info.status}
+    return pay_item
+
 
 @router.post('/deposit', summary='Пополнить баланс')
-def set_new_balance(new_balance: SBalance, user_data: SUserInfo = Depends(AuthService.get_current_user)) -> dict:
+def set_new_balance(new_balance: SBalancePlus, user_data: SUserInfo = Depends(AuthService.get_current_user)) -> dict:
     
     balance = UsersCRUD.get_balance_by_id(SUserID(id=user_data.id))
     ph = SPaymentHistory(user_id=user_data.id, 
@@ -82,4 +94,13 @@ def set_new_balance(new_balance: SBalance, user_data: SUserInfo = Depends(AuthSe
     UsersCRUD.add_payment_by_id(SUserID(id=user_data.id), new_balance.balance)
     PaymentHistoryCRUD.update_status_by_id(pay_item.id, 'complete')
     
-    return {'message': 'success', 'detail': 'Баланс успешно пополнен'}
+    return {'message': 'success',
+            'detail': 'Баланс успешно пополнен',
+            'name': 'pay_id', 
+            'value': f'{pay_item.id}', 
+            'raw_data': f'pay_id={pay_item.id}',
+            'id': pay_item.id,
+            'user_id': pay_item.user_id,
+            'pay': pay_item.value,
+            'date': pay_item.processed,
+            'status': pay_item.status}
